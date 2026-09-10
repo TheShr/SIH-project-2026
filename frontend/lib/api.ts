@@ -20,6 +20,22 @@ export class ApiError extends Error {
   }
 }
 
+function getApiErrorMessage(body: unknown, fallback: string): string {
+  if (!body || typeof body !== 'object' || !('detail' in body)) return fallback
+  const detail = (body as { detail?: unknown }).detail
+  if (typeof detail === 'string') return detail
+  if (Array.isArray(detail)) {
+    return detail.map(item => {
+      if (!item || typeof item !== 'object') return String(item)
+      const message = (item as { msg?: unknown }).msg
+      const location = (item as { loc?: unknown }).loc
+      const field = Array.isArray(location) ? location.slice(1).join('.') : 'Field'
+      return `${field}: ${String(message ?? 'Invalid value')}`
+    }).join(' ')
+  }
+  return fallback
+}
+
 export async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
   const token = typeof window !== 'undefined' ? window.localStorage.getItem('sanket_access_token') : null
   const response = await fetch(`${API_BASE_URL}${path}`, {
@@ -36,7 +52,7 @@ export async function apiFetch<T>(path: string, options?: RequestInit): Promise<
     let detail = `Request failed with status ${response.status}`
     try {
       const body = await response.json()
-      detail = body.detail ?? detail
+      detail = getApiErrorMessage(body, detail)
     } catch {
       // Keep the HTTP error when the backend does not return JSON.
     }

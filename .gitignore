@@ -1,0 +1,18 @@
+# Local environment and secrets
+.env
+.env.*
+!.env.example
+backend/.env
+frontend/.env.local
+
+# Local runtime data
+*.db
+
+# Python caches
+__pycache__/
+*.py[cod]
+
+# Frontend build output
+frontend/node_modules/
+frontend/.next/
+frontend/*.tsbuildinfo
