@@ -23,8 +23,12 @@ def register_user(user_in: UserRegister, db: Session = Depends(get_db)):
         role=user_in.role
     )
     db.add(user)
-    db.commit()
-    db.refresh(user)
+    try:
+        db.commit()
+        db.refresh(user)
+    except Exception:
+        db.rollback()
+        raise HTTPException(status_code=500, detail="Unable to create account. Please try again.")
 
     token = create_access_token({"sub": str(user.id), "role": user.role})
     return {
